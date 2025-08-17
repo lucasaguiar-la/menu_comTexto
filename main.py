@@ -1,8 +1,8 @@
 import tkinter as tk
 import pyautogui
 import keyboard
-from functools import partial
 
+# Dicionário: cada atalho → lista de textos
 menus = {
     "ctrl+alt+z": ["Essa é a nota número 1", "Essa é outra nota", "Mais uma nota que coloquei aqui"],
     "ctrl+alt+x": ["Para essa parte voce coloca essa nota", "Lembre-se, a nota é tal"],
@@ -16,27 +16,42 @@ def show_menu(texts):
     # Cria janela sem borda
     menu = tk.Toplevel(root)
     menu.overrideredirect(True)
-    menu.geometry(f"+{x}+{y}")  # Posição na tela
-    menu.attributes('-topmost', True)  # Mantém a janela acima de todas
+    
+    # SOLUÇÃO 1: Definir posição ANTES do topmost
+    menu.geometry(f"+{x}+{y}")
+    menu.update_idletasks()  # Força atualização da geometria
+    menu.attributes('-topmost', True)  # Aplica topmost DEPOIS
     
     # Adiciona cada texto como um label
     for text in texts:
         lbl = tk.Label(menu, text=text, anchor="w", bg="white", fg="black", 
                         padx=10, pady=5, relief="solid", borderwidth=1)
         lbl.pack(fill="x")
+        
+        # Adiciona função de clique para copiar texto
+        lbl.bind("<Button-1>", lambda e, txt=text: copy_to_clipboard(txt, menu))
 
-    # Atalho para fechar o menu
     def fechar_menu():
         if menu.winfo_exists():
             menu.destroy()
+    
     keyboard.add_hotkey("ctrl+alt+\\", fechar_menu)
 
-    # Garante que o Tk aplique a posição
-    menu.update_idletasks()
+    # Fecha se perder o foco (com delay para evitar fechamento imediato)
+    menu.after(100, lambda: menu.bind("<FocusOut>", lambda e: menu.destroy()))
+    menu.focus_force()
 
-# Configura os atalhos usando partial para "fixar" cada lista
+def copy_to_clipboard(text, menu):
+    """Copia texto para clipboard e fecha o menu"""
+    pyautogui.hotkey('ctrl', 'c')  # Limpa clipboard atual
+    root.clipboard_clear()
+    root.clipboard_append(text)
+    root.update()
+    menu.destroy()
+
+# Configura os atalhos
 for hotkey, texts in menus.items():
-    keyboard.add_hotkey(hotkey, partial(show_menu, texts))
+    keyboard.add_hotkey(hotkey, lambda t=texts: show_menu(t))
 
 # Janela oculta (loop principal)
 root = tk.Tk()
@@ -44,6 +59,8 @@ root.withdraw()
 
 print("Atalhos ativos:")
 for hotkey in menus.keys():
-    print(f"  {hotkey}")
+    print(f"  {hotkey} → abre menu")
+print("  ctrl+alt+\\ → fecha menu")
+print("  Clique em qualquer item para copiar para clipboard")
 
 root.mainloop()

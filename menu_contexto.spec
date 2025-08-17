@@ -1,10 +1,6 @@
-# menu_contexto.spec
-# Arquivo de especificação para PyInstaller
-
 # -*- mode: python ; coding: utf-8 -*-
 
 block_cipher = None
-
 
 a = Analysis(
     ['main.py'],
@@ -30,7 +26,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='menu_contexto',
+    name='Menu Com Texto',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
